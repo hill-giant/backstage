@@ -19,6 +19,7 @@ import {
   createApiRef,
   DiscoveryApi,
   FetchApi,
+  IdentityApi,
 } from '@backstage/core-plugin-api';
 import { ResponseError } from '@backstage/errors';
 import { ScmIntegrationRegistry } from '@backstage/integration';
@@ -37,6 +38,7 @@ import {
   ScaffolderGetIntegrationsListResponse,
   ScaffolderTask,
 } from './types';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 /**
  * Utility API reference for the {@link ScaffolderApi}.
@@ -55,17 +57,20 @@ export const scaffolderApiRef = createApiRef<ScaffolderApi>({
 export class ScaffolderClient implements ScaffolderApi {
   private readonly discoveryApi: DiscoveryApi;
   private readonly scmIntegrationsApi: ScmIntegrationRegistry;
+  private readonly identityApi: IdentityApi;
   private readonly fetchApi: FetchApi;
   private readonly useLongPollingLogs: boolean;
 
   constructor(options: {
     discoveryApi: DiscoveryApi;
     fetchApi: FetchApi;
+    identityApi: IdentityApi;
     scmIntegrationsApi: ScmIntegrationRegistry;
     useLongPollingLogs?: boolean;
   }) {
     this.discoveryApi = options.discoveryApi;
     this.fetchApi = options.fetchApi ?? { fetch };
+    this.identityApi = options.identityApi;
     this.scmIntegrationsApi = options.scmIntegrationsApi;
     this.useLongPollingLogs = options.useLongPollingLogs ?? false;
   }
@@ -177,11 +182,15 @@ export class ScaffolderClient implements ScaffolderApi {
       }
 
       this.discoveryApi.getBaseUrl('scaffolder').then(
-        baseUrl => {
+        async baseUrl => {
           const url = `${baseUrl}/v2/tasks/${encodeURIComponent(
             taskId,
           )}/eventstream`;
-          const eventSource = new EventSource(url, { withCredentials: true });
+          const { token } = await this.identityApi.getCredentials();
+          const eventSource = new EventSourcePolyfill(url, {
+            withCredentials: true,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
           eventSource.addEventListener('log', (event: any) => {
             if (event.data) {
               try {

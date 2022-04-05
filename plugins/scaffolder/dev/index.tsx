@@ -25,7 +25,11 @@ import {
 import React from 'react';
 import { scaffolderApiRef, ScaffolderClient } from '../src';
 import { ScaffolderPage } from '../src/plugin';
-import { discoveryApiRef, fetchApiRef } from '@backstage/core-plugin-api';
+import {
+  discoveryApiRef,
+  fetchApiRef,
+  identityApiRef,
+} from '@backstage/core-plugin-api';
 import { CatalogEntityPage } from '@backstage/plugin-catalog';
 
 createDevApp()
@@ -48,10 +52,16 @@ createDevApp()
     deps: {
       discoveryApi: discoveryApiRef,
       fetchApi: fetchApiRef,
+      identityApi: identityApiRef,
       scmIntegrationsApi: scmIntegrationsApiRef,
     },
-    factory: ({ discoveryApi, fetchApi, scmIntegrationsApi }) =>
-      new ScaffolderClient({ discoveryApi, fetchApi, scmIntegrationsApi }),
+    factory: ({ discoveryApi, fetchApi, identityApi, scmIntegrationsApi }) =>
+      new ScaffolderClient({
+        discoveryApi,
+        fetchApi,
+        identityApi,
+        scmIntegrationsApi,
+      }),
   })
   .addPage({
     path: '/create',
