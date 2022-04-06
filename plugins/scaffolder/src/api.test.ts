@@ -33,6 +33,7 @@ describe('api', () => {
 
   const discoveryApi = { getBaseUrl: async () => mockBaseUrl };
   const fetchApi = new MockFetchApi();
+  const identityApi = {} as any;
   const scmIntegrationsApi = ScmIntegrations.fromConfig(
     new ConfigReader({
       integrations: {
@@ -51,6 +52,7 @@ describe('api', () => {
       scmIntegrationsApi,
       discoveryApi,
       fetchApi,
+      identityApi,
     });
   });
 
@@ -128,6 +130,7 @@ describe('api', () => {
         apiClient = new ScaffolderClient({
           scmIntegrationsApi,
           discoveryApi,
+          identityApi,
           fetchApi,
           useLongPollingLogs: true,
         });
